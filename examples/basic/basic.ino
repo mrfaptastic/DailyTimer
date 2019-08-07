@@ -21,8 +21,9 @@ void ledOn(void);  // function definitions/prototypes required here
 void ledOff(void);
 void printSomething(void);
 
-const byte ledPin = 13;
+const byte ledPin = LED_BUILTIN;
 
+// turn the led low at 58 minutes to midnight, off a minute after
 DailyTimer ledTimer1(
   true,                             // AutoSync true or false, will run the startTimeCallback() if restarts within the active range or after range changes and you are in the range
   23,                               // Start Hour
@@ -36,6 +37,7 @@ DailyTimer ledTimer1(
   ledOff                            // pointer to function to execute at End time
 );
 
+// Trigger some serial output on the specific change over to 1 minute before Wednesday morning (00:00:00)
 DailyTimer serialPrintTimer(
   23,
   59,
@@ -47,9 +49,9 @@ DailyTimer serialPrintTimer(
 
 void setup() 
 {
-  Serial.begin(9600);
-  pinMode(13, OUTPUT);
-  setTime(1494979136);
+  Serial.begin(112500);
+  pinMode(ledPin, OUTPUT);
+  setTime(1494979075); // Set time for the purposes of this example to ->  GMT: Tuesday, 16 May 2017 23:57:55
   Serial.print("Active Timers=");
   Serial.println(ledTimer1.getInstanceCount());
   
@@ -71,6 +73,8 @@ void setup()
   serialPrintTimer.begin();
   Serial.print("Active days: ");
   Serial.println(serialPrintTimer.getDays(), BIN);
+  
+  ledOff();
 }
 
 void loop() 
@@ -79,8 +83,8 @@ void loop()
   DailyTimer::update();
   if(millis() - lastTime >= 1000)
   {
-    char timeBuffer[32] = "";
-    sprintf(timeBuffer, "Time:%2d:%02d:%02d\tDate:%02d/%02d/%4d", hour(), minute(), second(), month(), day(), year());
+    char timeBuffer[40] = "";
+    sprintf(timeBuffer, "Time:%02d:%02d:%02d\tDate:%02d/%02d/%4d (mm/dd/yyyy)\n", hour(), minute(), second(), month(), day(), year());
     Serial.println(timeBuffer);
     lastTime = millis();
   }
@@ -88,14 +92,16 @@ void loop()
 
 void ledOn(void)
 {
-  Serial.println("LED ON FUNCTION");
-  digitalWrite(13, HIGH);
+  Serial.println("LED ON FUNCTION - This should have happened at 58th minute. LED will go off 1 minute past midnight the next day (Wednesday).");
+  //digitalWrite(ledPin, HIGH);
+  digitalWrite(ledPin, LOW); // On ESP8266 LED LOW = ON
 }
 
 void ledOff(void)
 {
   Serial.println("LED OFF FUNCTION");
-  digitalWrite(13, LOW);
+  //digitalWrite(ledPin, LOW);
+  digitalWrite(ledPin, HIGH);
 }
 
 void printSomething(void)
